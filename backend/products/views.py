@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 import requests
 from django.conf import settings
+from decimal import Decimal
 from .models import Category, Product
 from .serializers import (
     CategorySerializer,
@@ -88,6 +89,9 @@ class ProductViewSet(viewsets.ModelViewSet):
                     'picture_url': product_data.get('image_url', ''),
                     'description': product_data.get('ingredients_text', ''),
                     'openfoodfacts_id': product_data.get('id', ''),
+                    # Open Food Facts does not provide price/stock, use safe defaults
+                    'price': Decimal('0.01'),
+                    'quantity_in_stock': 0,
                     'energy_kcal': nutriments.get('energy-kcal_100g'),
                     'fat': nutriments.get('fat_100g'),
                     'saturated_fat': nutriments.get('saturated-fat_100g'),
