@@ -202,6 +202,7 @@ const Products = () => {
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell>Image</TableCell>
                 <TableCell>Name</TableCell>
                 <TableCell>Brand</TableCell>
                 <TableCell>Category</TableCell>
@@ -213,6 +214,25 @@ const Products = () => {
             <TableBody>
               {products.map((product) => (
                 <TableRow key={product.id}>
+                  <TableCell>
+                    <Box
+                      component="img"
+                      src={product.picture_url}
+                      alt={product.name}
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        objectFit: 'cover',
+                        borderRadius: 1,
+                        bgcolor: '#f5f5f5',
+                        border: '1px solid #eee',
+                      }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.style.visibility = 'hidden'
+                      }}
+                    />
+                  </TableCell>
                   <TableCell>{product.name}</TableCell>
                   <TableCell>{product.brand || '-'}</TableCell>
                   <TableCell>{product.category_name || '-'}</TableCell>
