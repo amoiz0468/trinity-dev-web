@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from decimal import Decimal
 from .models import Invoice, InvoiceItem
 from users.serializers import CustomerSerializer
 from products.serializers import ProductListSerializer
@@ -45,6 +46,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
 class InvoiceCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating invoices"""
     items = InvoiceItemCreateSerializer(many=True, write_only=True)
+    invoice_number = serializers.CharField(required=False, allow_blank=True)
     
     class Meta:
         model = Invoice
@@ -55,13 +57,29 @@ class InvoiceCreateSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         items_data = validated_data.pop('items')
+        
+        # Calculate subtotal from items
+        subtotal = sum(
+            item_data['unit_price'] * item_data['quantity']
+            for item_data in items_data
+        )
+        
+        # Calculate tax and total
+        tax_rate = validated_data.get('tax_rate', Decimal('20.00'))
+        tax_amount = (subtotal * tax_rate) / 100
+        total_amount = subtotal + tax_amount
+        
+        # Add calculated fields to validated_data
+        validated_data['subtotal'] = subtotal
+        validated_data['tax_amount'] = tax_amount
+        validated_data['total_amount'] = total_amount
+        
+        # Create invoice
         invoice = Invoice.objects.create(**validated_data)
         
+        # Create invoice items
         for item_data in items_data:
             InvoiceItem.objects.create(invoice=invoice, **item_data)
-        
-        # Calculate totals
-        invoice.calculate_totals()
         
         return invoice
 
