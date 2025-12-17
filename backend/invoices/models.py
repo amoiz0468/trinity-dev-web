@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from decimal import Decimal
+from django.utils import timezone
 from users.models import Customer
 from products.models import Product
 
@@ -78,6 +79,18 @@ class Invoice(models.Model):
     
     def __str__(self):
         return f"Invoice {self.invoice_number} - {self.customer.full_name}"
+    
+    def save(self, *args, **kwargs):
+        # Auto-generate invoice number if not provided
+        if not self.invoice_number:
+            today = timezone.now()
+            date_str = today.strftime('%Y%m%d')
+            # Count invoices created today
+            count = Invoice.objects.filter(
+                invoice_number__startswith=f'INV-{date_str}'
+            ).count() + 1
+            self.invoice_number = f'INV-{date_str}-{count:04d}'
+        super().save(*args, **kwargs)
     
     def calculate_totals(self):
         """Calculate subtotal, tax, and total from invoice items"""
