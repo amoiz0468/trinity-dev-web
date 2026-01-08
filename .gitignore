@@ -69,3 +69,5 @@ frontend/dist/
 .env
 .env.local
 .env.production
+.env.example
+
