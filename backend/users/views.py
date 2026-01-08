@@ -13,8 +13,17 @@ from .serializers import (
 
 class CustomerViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for Customer CRUD operations.
-    Provides list, create, retrieve, update, delete, and purchase history.
+    ViewSet for Customer/User CRUD operations.
+    
+    Manage customer database with full CRUD functionality, view purchase history,
+    track spending patterns, and analyze customer behavior.
+    
+    **Features:**
+    - Create and manage customer records
+    - View complete purchase history
+    - Track total spending and average order value
+    - Get last purchase date and statistics
+    - Search and filter customers
     """
     queryset = Customer.objects.all()
     permission_classes = [IsAuthenticated]
@@ -29,7 +38,14 @@ class CustomerViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def history(self, request, pk=None):
         """
-        Get customer purchase history including all invoices and statistics.
+        Get customer purchase history with complete statistics.
+        
+        **Returns:**
+        - total_purchases: Total number of invoices
+        - total_spent: Sum of all paid invoices
+        - average_order_value: Average spending per order
+        - last_purchase_date: Date of most recent purchase
+        - invoices: List of all customer invoices
         """
         customer = self.get_object()
         invoices = customer.invoices.all()

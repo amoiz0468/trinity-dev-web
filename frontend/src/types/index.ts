@@ -23,6 +23,7 @@ export interface Product {
   category: number
   category_name: string
   picture_url: string
+  picture?: string
   quantity_in_stock: number
   stock_status: string
   is_in_stock: boolean

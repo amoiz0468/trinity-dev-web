@@ -62,13 +62,19 @@ export const productService = {
     return response.data
   },
   
-  create: async (data: Partial<Product>) => {
-    const response = await api.post<Product>('/products/', data)
+  create: async (data: Partial<Product> | FormData) => {
+    const isFormData = typeof FormData !== 'undefined' && data instanceof FormData
+    const response = await api.post<Product>('/products/', data, {
+      headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
+    })
     return response.data
   },
   
-  update: async (id: number, data: Partial<Product>) => {
-    const response = await api.put<Product>(`/products/${id}/`, data)
+  update: async (id: number, data: Partial<Product> | FormData) => {
+    const isFormData = typeof FormData !== 'undefined' && data instanceof FormData
+    const response = await api.put<Product>(`/products/${id}/`, data, {
+      headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
+    })
     return response.data
   },
   

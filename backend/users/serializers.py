@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 from django.contrib.auth.models import User
 from .models import Customer
 
@@ -13,8 +14,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 class CustomerSerializer(serializers.ModelSerializer):
     """Serializer for Customer model"""
-    full_name = serializers.ReadOnlyField()
-    full_address = serializers.ReadOnlyField()
+    full_name = serializers.SerializerMethodField()
+    full_address = serializers.SerializerMethodField()
     user = UserSerializer(read_only=True)
     
     class Meta:
@@ -26,6 +27,14 @@ class CustomerSerializer(serializers.ModelSerializer):
             'full_name', 'full_address'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    @extend_schema_field(serializers.CharField())
+    def get_full_name(self, obj):
+        return obj.full_name
+
+    @extend_schema_field(serializers.CharField())
+    def get_full_address(self, obj):
+        return obj.full_address
 
 
 class CustomerCreateSerializer(serializers.ModelSerializer):

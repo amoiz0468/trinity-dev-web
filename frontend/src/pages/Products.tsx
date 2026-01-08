@@ -25,10 +25,17 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   Divider,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Slider,
+  Stack,
+  Card,
+  CardContent,
 } from '@mui/material'
-import { QrCode2 as BarcodeIcon, Edit as EditIcon } from '@mui/icons-material'
+import { QrCode2 as BarcodeIcon, Edit as EditIcon, ExpandMore as ExpandMoreIcon, Clear as ClearIcon, TuneOutlined as TuneIcon } from '@mui/icons-material'
 import { productService } from '../services'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 
 const Products = () => {
   const queryClient = useQueryClient()
@@ -39,12 +46,19 @@ const Products = () => {
     price: '',
     quantity_in_stock: '',
     barcode: '',
+    picture: null as File | null,
+    picture_url: '',
   })
   const [formError, setFormError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStock, setFilterStock] = useState<'all' | 'in-stock' | 'low-stock' | 'out-of-stock'>('all')
   const [useBarcode, setUseBarcode] = useState(false)
   const [syncing, setSyncing] = useState(false)
+  
+  // Advanced filters
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000])
+  const [sortBy, setSortBy] = useState<'name' | 'price' | 'stock' | 'newest'>('newest')
+  const [expandedFilters, setExpandedFilters] = useState(true)
 
   const { data, isLoading, error } = useQuery('products', productService.getAll, {
     retry: 1,
@@ -53,25 +67,57 @@ const Products = () => {
   // Handle paginated responses or direct array
   const allProducts = Array.isArray(data) ? data : (data?.results || [])
 
-  // Apply client-side filtering
-  const products = allProducts.filter((product: any) => {
-    const matchesSearch = searchTerm === '' || 
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.brand || '').toLowerCase().includes(searchTerm.toLowerCase())
-    
-    const matchesStock = filterStock === 'all' ||
-      (filterStock === 'in-stock' && product.stock_status === 'In Stock') ||
-      (filterStock === 'low-stock' && product.stock_status === 'Low Stock') ||
-      (filterStock === 'out-of-stock' && product.stock_status === 'Out of Stock')
-    
-    return matchesSearch && matchesStock
-  })
+  // Get price range from products
+  const minPrice = useMemo(() => {
+    return allProducts.length > 0 ? Math.min(...allProducts.map((p: any) => parseFloat(p.price) || 0)) : 0
+  }, [allProducts])
+
+  const maxPrice = useMemo(() => {
+    return allProducts.length > 0 ? Math.max(...allProducts.map((p: any) => parseFloat(p.price) || 0)) : 1000
+  }, [allProducts])
+
+  // Apply client-side filtering and sorting
+  const products = useMemo(() => {
+    let filtered = allProducts.filter((product: any) => {
+      const matchesSearch = searchTerm === '' || 
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (product.brand || '').toLowerCase().includes(searchTerm.toLowerCase())
+      
+      const matchesStock = filterStock === 'all' ||
+        (filterStock === 'in-stock' && product.stock_status === 'In Stock') ||
+        (filterStock === 'low-stock' && product.stock_status === 'Low Stock') ||
+        (filterStock === 'out-of-stock' && product.stock_status === 'Out of Stock')
+
+      const price = parseFloat(product.price) || 0
+      const matchesPrice = price >= priceRange[0] && price <= priceRange[1]
+      
+      return matchesSearch && matchesStock && matchesPrice
+    })
+
+    // Apply sorting
+    const sorted = [...filtered].sort((a: any, b: any) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name)
+        case 'price':
+          return parseFloat(a.price) - parseFloat(b.price)
+        case 'stock':
+          return b.quantity_in_stock - a.quantity_in_stock
+        case 'newest':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        default:
+          return 0
+      }
+    })
+
+    return sorted
+  }, [allProducts, searchTerm, filterStock, priceRange, sortBy])
 
   const createMutation = useMutation(productService.create, {
     onSuccess: () => {
       queryClient.invalidateQueries('products')
       setOpen(false)
-      setForm({ name: '', brand: '', price: '', quantity_in_stock: '', barcode: '' })
+      setForm({ name: '', brand: '', price: '', quantity_in_stock: '', barcode: '', picture: null, picture_url: '' })
       setFormError('')
       setUseBarcode(false)
     },
@@ -97,6 +143,7 @@ const Products = () => {
         name: result.product.name || '',
         brand: result.product.brand || '',
         price: result.product.price?.toString() || '',
+        picture_url: result.product.picture_url || form.picture_url,
       })
       setFormError('')
     } catch (error: any) {
@@ -112,11 +159,16 @@ const Products = () => {
       return
     }
 
-    const payload = {
-      name: form.name,
-      brand: form.brand || undefined,
-      price: Number(form.price),
-      quantity_in_stock: Number(form.quantity_in_stock),
+    const payload = new FormData()
+    payload.append('name', form.name)
+    if (form.brand) payload.append('brand', form.brand)
+    payload.append('price', form.price)
+    payload.append('quantity_in_stock', form.quantity_in_stock)
+    if (form.barcode) payload.append('barcode', form.barcode)
+    if (form.picture) {
+      payload.append('picture', form.picture)
+    } else if (form.picture_url) {
+      payload.append('picture_url', form.picture_url)
     }
 
     createMutation.mutate(payload)
@@ -156,7 +208,7 @@ const Products = () => {
 
       <Box sx={{ mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid item xs={12} sm={6} md={5}>
             <TextField
               fullWidth
               label="Search by name or brand"
@@ -168,26 +220,102 @@ const Products = () => {
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <FormControl fullWidth>
-              <InputLabel>Filter by Stock</InputLabel>
+              <InputLabel>Sort By</InputLabel>
               <Select
-                value={filterStock}
-                label="Filter by Stock"
-                onChange={(e) => setFilterStock(e.target.value as any)}
+                value={sortBy}
+                label="Sort By"
+                onChange={(e) => setSortBy(e.target.value as any)}
               >
-                <MenuItem value="all">All Products</MenuItem>
-                <MenuItem value="in-stock">In Stock</MenuItem>
-                <MenuItem value="low-stock">Low Stock</MenuItem>
-                <MenuItem value="out-of-stock">Out of Stock</MenuItem>
+                <MenuItem value="newest">Newest First</MenuItem>
+                <MenuItem value="name">Name (A-Z)</MenuItem>
+                <MenuItem value="price">Price (Low to High)</MenuItem>
+                <MenuItem value="stock">Stock (High to Low)</MenuItem>
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={12} md={5} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
+          <Grid item xs={12} sm={12} md={4} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
             <Button variant="contained" onClick={() => setOpen(true)}>
               Add Product
             </Button>
           </Grid>
         </Grid>
       </Box>
+
+      {/* Advanced Filters */}
+      <Accordion
+        expanded={expandedFilters}
+        onChange={() => setExpandedFilters(!expandedFilters)}
+        sx={{ mb: 3, bgcolor: '#f5f5f5' }}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <TuneIcon sx={{ mr: 1 }} />
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            Advanced Filters
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Box sx={{ width: '100%' }}>
+            <Grid container spacing={3}>
+              {/* Stock Filter */}
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Stock Status</InputLabel>
+                  <Select
+                    value={filterStock}
+                    label="Stock Status"
+                    onChange={(e) => setFilterStock(e.target.value as any)}
+                  >
+                    <MenuItem value="all">All Products</MenuItem>
+                    <MenuItem value="in-stock">In Stock</MenuItem>
+                    <MenuItem value="low-stock">Low Stock</MenuItem>
+                    <MenuItem value="out-of-stock">Out of Stock</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {/* Price Range Filter */}
+              <Grid item xs={12} sm={6}>
+                <Typography gutterBottom variant="subtitle2" sx={{ fontWeight: 600 }}>
+                  Price Range: ${priceRange[0]} - ${priceRange[1]}
+                </Typography>
+                <Slider
+                  value={priceRange}
+                  onChange={(e, newValue) => setPriceRange(newValue as [number, number])}
+                  valueLabelDisplay="auto"
+                  min={Math.floor(minPrice)}
+                  max={Math.ceil(maxPrice) || 1000}
+                  step={1}
+                  marks={[
+                    { value: Math.floor(minPrice), label: `$${Math.floor(minPrice)}` },
+                    { value: Math.ceil(maxPrice) || 1000, label: `$${Math.ceil(maxPrice) || 1000}` },
+                  ]}
+                />
+              </Grid>
+
+              {/* Results Summary */}
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Showing {products.length} of {allProducts.length} products
+                  </Typography>
+                  <Button
+                    size="small"
+                    startIcon={<ClearIcon />}
+                    onClick={() => {
+                      setSearchTerm('')
+                      setFilterStock('all')
+                      setPriceRange([Math.floor(minPrice), Math.ceil(maxPrice) || 1000])
+                      setSortBy('newest')
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
+        </AccordionDetails>
+      </Accordion>
 
       {!products || products.length === 0 ? (
         <Paper sx={{ p: 2 }}>
@@ -217,7 +345,7 @@ const Products = () => {
                   <TableCell>
                     <Box
                       component="img"
-                      src={product.picture_url}
+                      src={product.picture_url || ''}
                       alt={product.name}
                       sx={{
                         width: 48,
@@ -337,6 +465,23 @@ const Products = () => {
             onChange={(e) => setForm({ ...form, brand: e.target.value })}
             disabled={useBarcode && syncing}
           />
+          <Button
+            variant="outlined"
+            component="label"
+            fullWidth
+            sx={{ mt: 1, mb: 1 }}
+          >
+            {form.picture ? `Selected: ${form.picture.name}` : 'Upload Image'}
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                setForm({ ...form, picture: file || null })
+              }}
+            />
+          </Button>
           <TextField
             label="Price"
             type="number"

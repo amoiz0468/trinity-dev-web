@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 from decimal import Decimal
 from .models import Invoice, InvoiceItem
 from users.serializers import CustomerSerializer
@@ -29,7 +30,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
     """Serializer for Invoice model"""
     customer_details = CustomerSerializer(source='customer', read_only=True)
     items = InvoiceItemSerializer(many=True, read_only=True)
-    total_items = serializers.ReadOnlyField()
+    total_items = serializers.SerializerMethodField()
     
     class Meta:
         model = Invoice
@@ -41,6 +42,10 @@ class InvoiceSerializer(serializers.ModelSerializer):
             'notes', 'created_at', 'updated_at', 'paid_at', 'items'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    @extend_schema_field(serializers.IntegerField())
+    def get_total_items(self, obj):
+        return obj.total_items
 
 
 class InvoiceCreateSerializer(serializers.ModelSerializer):
@@ -87,7 +92,7 @@ class InvoiceCreateSerializer(serializers.ModelSerializer):
 class InvoiceListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for invoice lists"""
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
-    total_items = serializers.ReadOnlyField()
+    total_items = serializers.SerializerMethodField()
     
     class Meta:
         model = Invoice
@@ -95,3 +100,7 @@ class InvoiceListSerializer(serializers.ModelSerializer):
             'id', 'invoice_number', 'customer_name', 'status',
             'total_amount', 'payment_method', 'total_items', 'created_at'
         ]
+
+    @extend_schema_field(serializers.IntegerField())
+    def get_total_items(self, obj):
+        return obj.total_items

@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.utils import timezone
 import requests
 from django.conf import settings
@@ -18,6 +19,9 @@ from .serializers import (
 class CategoryViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Category CRUD operations.
+    
+    List all categories, retrieve individual category details,
+    create new categories, update existing ones, and delete categories.
     """
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -27,13 +31,25 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class ProductViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Product CRUD operations.
-    Includes integration with Open Food Facts API.
+    
+    Manage products with full CRUD functionality, search by name/brand/barcode,
+    filter by category and status, sort by various fields, integrate with Open Food Facts API,
+    and handle product image uploads to S3.
+    
+    **Features:**
+    - Full product lifecycle management
+    - Barcode scanning and auto-import from Open Food Facts
+    - Product image upload and S3 storage
+    - Stock quantity management
+    - Nutritional information tracking
+    - Advanced filtering and sorting capabilities
     """
     queryset = Product.objects.all()
     permission_classes = [IsAuthenticated]
     search_fields = ['name', 'brand', 'barcode', 'category__name']
     filterset_fields = ['category', 'is_active']
     ordering_fields = ['name', 'price', 'quantity_in_stock', 'created_at']
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
     
     def get_serializer_class(self):
         if self.action == 'list':
@@ -46,7 +62,20 @@ class ProductViewSet(viewsets.ModelViewSet):
     def sync_openfoodfacts(self, request):
         """
         Sync products with Open Food Facts API.
-        Accepts barcode or product name for search.
+        
+        **Request Body:**
+        ```json
+        {
+            "barcode": "3017620422003"
+        }
+        ```
+        
+        **Returns:**
+        - Product data auto-populated from Open Food Facts
+        - Nutritional information included
+        - Either creates new product or updates existing one
+        
+        Accepts barcode for search and returns populated product data.
         """
         barcode = request.data.get('barcode')
         
@@ -125,6 +154,18 @@ class ProductViewSet(viewsets.ModelViewSet):
     def update_stock(self, request, pk=None):
         """
         Update product stock quantity.
+        
+        **Request Body:**
+        ```json
+        {
+            "quantity": 100
+        }
+        ```
+        
+        **Parameters:**
+        - pk: Product ID
+        
+        **Returns:** Updated product object with new stock level
         """
         product = self.get_object()
         quantity = request.data.get('quantity')

@@ -5,9 +5,8 @@ const API_URL = '/api'
 
 const api = axios.create({
   baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // Let axios set Content-Type so FormData uploads work
+  headers: {},
 })
 
 // Request interceptor to add auth token
