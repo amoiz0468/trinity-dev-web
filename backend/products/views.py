@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, SAFE_METHODS
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.utils import timezone
 import requests
@@ -27,6 +27,11 @@ class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated]
 
+    def get_permissions(self):
+        if self.request.method in SAFE_METHODS:
+            return [IsAuthenticated()]
+        return [IsAdminUser()]
+
 
 class ProductViewSet(viewsets.ModelViewSet):
     """
@@ -50,6 +55,11 @@ class ProductViewSet(viewsets.ModelViewSet):
     filterset_fields = ['category', 'is_active']
     ordering_fields = ['name', 'price', 'quantity_in_stock', 'created_at']
     parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def get_permissions(self):
+        if self.request.method in SAFE_METHODS:
+            return [IsAuthenticated()]
+        return [IsAdminUser()]
     
     def get_serializer_class(self):
         if self.action == 'list':

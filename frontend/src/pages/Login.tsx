@@ -28,8 +28,12 @@ const Login = () => {
       const data = await authService.login(username, password)
       localStorage.setItem('access_token', data.access)
       localStorage.setItem('refresh_token', data.refresh)
-      navigate('/dashboard')
+      const me = await authService.getMe()
+      const role = me.user.is_staff ? 'staff' : 'customer'
+      authService.setRole(role)
+      navigate(role === 'staff' ? '/dashboard' : '/customer')
     } catch (err: any) {
+      authService.logout()
       setError(err.response?.data?.detail || 'Login failed. Please check your credentials.')
     } finally {
       setLoading(false)
@@ -66,7 +70,7 @@ const Login = () => {
                 margin="normal"
                 required
                 fullWidth
-                label="Username"
+                label="Username or Email"
                 autoComplete="username"
                 autoFocus
                 value={username}
@@ -90,6 +94,13 @@ const Login = () => {
                 disabled={loading}
               >
                 {loading ? 'Signing in...' : 'Sign In'}
+              </Button>
+              <Button
+                fullWidth
+                variant="text"
+                onClick={() => navigate('/register')}
+              >
+                Create Customer Account
               </Button>
             </Box>
           </CardContent>

@@ -29,6 +29,10 @@ import { useState } from 'react'
 const Invoices = () => {
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
+  const [statusOpen, setStatusOpen] = useState(false)
+  const [statusValue, setStatusValue] = useState<'pending' | 'paid' | 'cancelled' | 'refunded'>('pending')
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(null)
+  const [statusError, setStatusError] = useState('')
   const [form, setForm] = useState({
     customer: '',
     payment_method: 'cash',
@@ -74,6 +78,20 @@ const Invoices = () => {
     onError: () => setFormError('Failed to create invoice. Please try again.'),
   })
 
+  const statusMutation = useMutation(
+    (payload: { id: number; status: string }) =>
+      invoiceService.update(payload.id, { status: payload.status }),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('invoices')
+        setStatusOpen(false)
+        setSelectedInvoiceId(null)
+        setStatusError('')
+      },
+      onError: () => setStatusError('Failed to update invoice status.'),
+    }
+  )
+
   const handleSubmit = () => {
     if (!form.customer || !form.product || !form.quantity || !form.unit_price) {
       setFormError('Customer, product, quantity, and unit price are required.')
@@ -95,6 +113,18 @@ const Invoices = () => {
     }
 
     createMutation.mutate(payload)
+  }
+
+  const openStatusDialog = (invoice: any) => {
+    setSelectedInvoiceId(invoice.id)
+    setStatusValue(invoice.status)
+    setStatusError('')
+    setStatusOpen(true)
+  }
+
+  const handleStatusUpdate = () => {
+    if (!selectedInvoiceId) return
+    statusMutation.mutate({ id: selectedInvoiceId, status: statusValue })
   }
 
   if (isLoading) {
@@ -150,6 +180,7 @@ const Invoices = () => {
                 <TableCell>Total</TableCell>
                 <TableCell>Payment</TableCell>
                 <TableCell>Status</TableCell>
+                <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -172,6 +203,11 @@ const Invoices = () => {
                       }
                       size="small"
                     />
+                  </TableCell>
+                  <TableCell align="right">
+                    <Button size="small" onClick={() => openStatusDialog(invoice)}>
+                      Update Status
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -287,6 +323,43 @@ const Invoices = () => {
             disabled={createMutation.isLoading || customersQuery.isLoading || productsQuery.isLoading}
           >
             {createMutation.isLoading ? 'Saving...' : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={statusOpen} onClose={() => setStatusOpen(false)} fullWidth maxWidth="xs">
+        <DialogTitle>Update Invoice Status</DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <FormControl fullWidth margin="dense">
+            <InputLabel id="status-label">Status</InputLabel>
+            <Select
+              labelId="status-label"
+              value={statusValue}
+              label="Status"
+              onChange={(e) => setStatusValue(e.target.value as any)}
+            >
+              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="paid">Paid</MenuItem>
+              <MenuItem value="cancelled">Cancelled</MenuItem>
+              <MenuItem value="refunded">Refunded</MenuItem>
+            </Select>
+          </FormControl>
+          {statusError && (
+            <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+              {statusError}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setStatusOpen(false)} disabled={statusMutation.isLoading}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleStatusUpdate}
+            disabled={statusMutation.isLoading}
+          >
+            {statusMutation.isLoading ? 'Saving...' : 'Save'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser
 from django.db.models import Sum, Count, Avg, F, Q
 from django.utils import timezone
 from datetime import timedelta
@@ -14,7 +14,7 @@ class ReportsView(APIView):
     API View for generating KPI reports.
     Implements 5+ Key Performance Indicators.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
     
     def get(self, request):
         """
@@ -124,7 +124,7 @@ class SalesReportView(APIView):
     """
     Detailed sales analytics endpoint.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
     
     def get(self, request):
         days = int(request.query_params.get('days', 30))
@@ -158,7 +158,7 @@ class ProductPerformanceView(APIView):
     """
     Product performance metrics.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
     
     def get(self, request):
         # Products needing restock
@@ -187,7 +187,7 @@ class CustomerAnalyticsView(APIView):
     """
     Customer analytics and behavior.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
     
     def get(self, request):
         # Active vs total customers
