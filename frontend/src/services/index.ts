@@ -1,5 +1,5 @@
 import api from './api'
-import { Customer, Product, Invoice, Category, KPIData } from '../types'
+import { Customer, Product, Invoice, Category, KPIData, CurrentUserResponse } from '../types'
 
 // Authentication
 export const authService = {
@@ -7,14 +7,38 @@ export const authService = {
     const response = await api.post('/auth/token/', { username, password })
     return response.data
   },
+
+  register: async (data: Partial<Customer> & { password: string; email: string }) => {
+    const response = await api.post('/auth/register/', data)
+    return response.data
+  },
+
+  getMe: async () => {
+    const response = await api.get<CurrentUserResponse>('/auth/me/')
+    return response.data
+  },
+
+  updateMe: async (data: Partial<Customer>) => {
+    const response = await api.patch('/auth/me/', data)
+    return response.data
+  },
   
   logout: () => {
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
+    localStorage.removeItem('user_role')
   },
   
   isAuthenticated: () => {
     return !!localStorage.getItem('access_token')
+  },
+
+  getRole: () => {
+    return localStorage.getItem('user_role')
+  },
+
+  setRole: (role: 'staff' | 'customer') => {
+    localStorage.setItem('user_role', role)
   },
 }
 
@@ -119,7 +143,7 @@ export const invoiceService = {
   },
   
   update: async (id: number, data: Partial<Invoice>) => {
-    const response = await api.put<Invoice>(`/invoices/${id}/`, data)
+    const response = await api.patch<Invoice>(`/invoices/${id}/`, data)
     return response.data
   },
   

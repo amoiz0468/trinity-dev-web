@@ -1,13 +1,18 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material'
 import Layout from './components/Layout'
+import CustomerLayout from './components/CustomerLayout'
 import Login from './pages/Login'
+import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Products from './pages/Products'
 import Customers from './pages/Customers'
 import Invoices from './pages/Invoices'
 import Reports from './pages/Reports'
-import PrivateRoute from './components/PrivateRoute'
+import CustomerCatalog from './pages/CustomerCatalog'
+import CustomerOrders from './pages/CustomerOrders'
+import CustomerProfile from './pages/CustomerProfile'
+import RoleRoute from './components/RoleRoute'
 
 const theme = createTheme({
   palette: {
@@ -26,12 +31,13 @@ function App() {
       <CssBaseline />
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route
           path="/"
           element={
-            <PrivateRoute>
+            <RoleRoute allow={['staff']}>
               <Layout />
-            </PrivateRoute>
+            </RoleRoute>
           }
         >
           <Route index element={<Navigate to="/dashboard" replace />} />
@@ -40,6 +46,19 @@ function App() {
           <Route path="customers" element={<Customers />} />
           <Route path="invoices" element={<Invoices />} />
           <Route path="reports" element={<Reports />} />
+        </Route>
+        <Route
+          path="/customer"
+          element={
+            <RoleRoute allow={['customer']}>
+              <CustomerLayout />
+            </RoleRoute>
+          }
+        >
+          <Route index element={<Navigate to="/customer/catalog" replace />} />
+          <Route path="catalog" element={<CustomerCatalog />} />
+          <Route path="orders" element={<CustomerOrders />} />
+          <Route path="profile" element={<CustomerProfile />} />
         </Route>
       </Routes>
     </ThemeProvider>
