@@ -7,12 +7,6 @@ import {
   Paper,
   TextField,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Chip,
   Dialog,
   DialogTitle,
@@ -23,7 +17,15 @@ import {
   Select,
   MenuItem,
   Alert,
+  Card,
+  CardContent,
+  CardMedia,
+  CardActions,
+  Grid,
+  Rating,
+  InputAdornment,
 } from '@mui/material'
+import { ShoppingCart, Search } from 'lucide-react'
 import { invoiceService, productService } from '../services'
 
 const CustomerCatalog = () => {
@@ -144,94 +146,255 @@ const CustomerCatalog = () => {
   }
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Product Catalog
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Browse available products
-      </Typography>
+    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+      {/* Header Section */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h3" sx={{ fontWeight: 700, mb: 1, color: '#1a1a1a' }}>
+          Product Catalog
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem' }}>
+          Discover our wide range of quality products
+        </Typography>
+      </Box>
 
       {purchaseSuccess && (
-        <Alert severity="success" sx={{ mb: 2 }}>
+        <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }}>
           {purchaseSuccess}
         </Alert>
       )}
 
-      <Box sx={{ mb: 2 }}>
+      {/* Search Bar */}
+      <Box sx={{ mb: 4 }}>
         <TextField
           fullWidth
-          label="Search by name or brand"
+          placeholder="Search by product name or brand..."
           variant="outlined"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              backgroundColor: '#fff',
+            },
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search size={20} color="#999" />
+              </InputAdornment>
+            ),
+          }}
         />
       </Box>
 
-      {!filteredProducts || filteredProducts.length === 0 ? (
-        <Paper sx={{ p: 2 }}>
-          <Typography color="text.secondary">
-            No products found.
-          </Typography>
-        </Paper>
-      ) : (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Brand</TableCell>
-                <TableCell>Price</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="right">Action</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredProducts.map((product: any) => (
-                <TableRow key={product.id}>
-                  <TableCell>{product.name}</TableCell>
-                  <TableCell>{product.brand || '-'}</TableCell>
-                  <TableCell>${product.price}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={product.stock_status}
-                      color={
-                        product.stock_status === 'In Stock'
-                          ? 'success'
-                          : product.stock_status === 'Low Stock'
-                          ? 'warning'
-                          : 'error'
-                      }
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell align="right">
-                    <Button
-                      variant="contained"
-                      size="small"
-                      onClick={() => handleOpenBuy(product)}
-                      disabled={product.stock_status === 'Out of Stock'}
-                    >
-                      Buy
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+      {isLoading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <CircularProgress />
+        </Box>
       )}
 
-      <Dialog open={buyOpen} onClose={() => setBuyOpen(false)} fullWidth maxWidth="xs">
-        <DialogTitle>Buy Product</DialogTitle>
-        <DialogContent sx={{ pt: 1 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            {selectedProduct?.name} {selectedProduct?.brand ? `(${selectedProduct.brand})` : ''}
+      {error && (
+        <Paper sx={{ p: 3, bgcolor: '#ffebee', borderRadius: 2 }}>
+          <Typography color="error">
+            Failed to load products. Please try again later.
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Price: ${selectedProduct?.price}
-          </Typography>
+        </Paper>
+      )}
 
+      {!isLoading && !error && (!filteredProducts || filteredProducts.length === 0) && (
+        <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 2 }}>
+          <Typography color="text.secondary" variant="h6">
+            No products found. Try adjusting your search.
+          </Typography>
+        </Paper>
+      )}
+
+      {!isLoading && !error && filteredProducts && filteredProducts.length > 0 && (
+        <Grid container spacing={3}>
+          {filteredProducts.map((product: any) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
+              <Card
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  borderRadius: 2,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
+                    transform: 'translateY(-4px)',
+                  },
+                }}
+              >
+                {/* Product Image */}
+                <CardMedia
+                  component="div"
+                  sx={{
+                    height: 250,
+                    backgroundColor: '#f5f5f5',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    position: 'relative',
+                  }}
+                >
+                  {product.picture_url ? (
+                    <img
+                      src={product.picture_url}
+                      alt={product.name}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#e0e0e0',
+                      }}
+                    >
+                      <Typography color="text.secondary">No Image</Typography>
+                    </Box>
+                  )}
+                  {/* Stock Status Badge */}
+                  <Chip
+                    label={product.stock_status}
+                    color={
+                      product.stock_status === 'In Stock'
+                        ? 'success'
+                        : product.stock_status === 'Low Stock'
+                        ? 'warning'
+                        : 'error'
+                    }
+                    size="small"
+                    sx={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      fontWeight: 600,
+                    }}
+                  />
+                </CardMedia>
+
+                {/* Product Content */}
+                <CardContent sx={{ flexGrow: 1, pb: 1 }}>
+                  {/* Brand */}
+                  <Typography
+                    color="text.secondary"
+                    sx={{ fontSize: '0.875rem', fontWeight: 600, mb: 0.5 }}
+                  >
+                    {product.brand || 'Brand'}
+                  </Typography>
+
+                  {/* Product Name */}
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 600,
+                      mb: 1,
+                      minHeight: '2.5rem',
+                      overflow: 'hidden',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                    }}
+                  >
+                    {product.name}
+                  </Typography>
+
+                  {/* Rating */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Rating value={4} readOnly size="small" />
+                    <Typography variant="caption" color="text.secondary">
+                      (4.0)
+                    </Typography>
+                  </Box>
+
+                  {/* Price Section */}
+                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                    <Typography
+                      variant="h5"
+                      sx={{ fontWeight: 700, color: '#1976d2' }}
+                    >
+                      ${product.price}
+                    </Typography>
+                    {product.original_price && (
+                      <Typography
+                        sx={{
+                          textDecoration: 'line-through',
+                          color: 'text.secondary',
+                          fontSize: '0.9rem',
+                        }}
+                      >
+                        ${product.original_price}
+                      </Typography>
+                    )}
+                  </Box>
+                </CardContent>
+
+                {/* Buy Button */}
+                <CardActions sx={{ pt: 0 }}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    startIcon={<ShoppingCart size={18} />}
+                    onClick={() => handleOpenBuy(product)}
+                    disabled={product.stock_status === 'Out of Stock'}
+                    sx={{
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      fontWeight: 600,
+                      py: 1.2,
+                      borderRadius: 1,
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #5568d3 0%, #6b3a8e 100%)',
+                      },
+                    }}
+                  >
+                    {product.stock_status === 'Out of Stock' ? 'Out of Stock' : 'Buy Now'}
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      <Dialog open={buyOpen} onClose={() => setBuyOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 700, bgcolor: '#f5f5f5' }}>
+          Complete Your Purchase
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          {/* Product Summary */}
+          <Box
+            sx={{
+              p: 2,
+              bgcolor: '#f9f9f9',
+              borderRadius: 2,
+              mb: 3,
+              border: '1px solid #e0e0e0',
+            }}
+          >
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
+              {selectedProduct?.name}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              {selectedProduct?.brand ? `Brand: ${selectedProduct.brand}` : 'Brand: N/A'}
+            </Typography>
+            <Typography variant="h6" sx={{ color: '#1976d2', fontWeight: 700 }}>
+              Price: ${selectedProduct?.price}
+            </Typography>
+          </Box>
+
+          {/* Quantity Input */}
           <TextField
             label="Quantity"
             type="number"
@@ -240,9 +403,22 @@ const CustomerCatalog = () => {
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
             inputProps={{ min: 1 }}
+            sx={{ mb: 2 }}
+            variant="outlined"
           />
 
-          <FormControl fullWidth margin="dense">
+          {/* Total Price */}
+          <Box sx={{ mb: 3, p: 2, bgcolor: '#e3f2fd', borderRadius: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="body1">Total Price:</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#1976d2' }}>
+                ${(Number(selectedProduct?.price) * Number(quantity)).toFixed(2)}
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Payment Method */}
+          <FormControl fullWidth margin="dense" sx={{ mb: 2 }}>
             <InputLabel id="payment-method-label">Payment Method</InputLabel>
             <Select
               labelId="payment-method-label"
@@ -250,15 +426,19 @@ const CustomerCatalog = () => {
               label="Payment Method"
               onChange={(e) => setPaymentMethod(e.target.value as string)}
             >
-              <MenuItem value="cash">Cash</MenuItem>
-              <MenuItem value="card">Card</MenuItem>
-              <MenuItem value="paypal">PayPal</MenuItem>
-              <MenuItem value="other">Other</MenuItem>
+              <MenuItem value="cash">💵 Cash</MenuItem>
+              <MenuItem value="card">💳 Card</MenuItem>
+              <MenuItem value="paypal">🅿️ PayPal</MenuItem>
+              <MenuItem value="other">📱 Other</MenuItem>
             </Select>
           </FormControl>
 
+          {/* Card Details */}
           {paymentMethod === 'card' && (
-            <>
+            <Box sx={{ mb: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 2 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
+                Card Details
+              </Typography>
               <TextField
                 label="Card Number"
                 fullWidth
@@ -267,39 +447,45 @@ const CustomerCatalog = () => {
                 onChange={(e) => setCardNumber(e.target.value)}
                 placeholder="4242 4242 4242 4242"
               />
-              <TextField
-                label="Expiry (MM/YY)"
-                fullWidth
-                margin="dense"
-                value={cardExpiry}
-                onChange={(e) => setCardExpiry(e.target.value)}
-                placeholder="12/30"
-              />
-              <TextField
-                label="CVC"
-                fullWidth
-                margin="dense"
-                value={cardCvc}
-                onChange={(e) => setCardCvc(e.target.value)}
-                placeholder="123"
-              />
-            </>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mt: 1 }}>
+                <TextField
+                  label="Expiry (MM/YY)"
+                  margin="dense"
+                  value={cardExpiry}
+                  onChange={(e) => setCardExpiry(e.target.value)}
+                  placeholder="12/30"
+                />
+                <TextField
+                  label="CVC"
+                  margin="dense"
+                  value={cardCvc}
+                  onChange={(e) => setCardCvc(e.target.value)}
+                  placeholder="123"
+                />
+              </Box>
+            </Box>
           )}
 
+          {/* Error Message */}
           {purchaseError && (
-            <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+            <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
               {purchaseError}
-            </Typography>
+            </Alert>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setBuyOpen(false)} disabled={purchaseMutation.isLoading}>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button onClick={() => setBuyOpen(false)} disabled={purchaseMutation.isLoading} variant="outlined">
             Cancel
           </Button>
           <Button
             variant="contained"
             onClick={handleConfirmBuy}
             disabled={purchaseMutation.isLoading}
+            sx={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              fontWeight: 600,
+              px: 3,
+            }}
           >
             {purchaseMutation.isLoading ? 'Processing...' : 'Confirm Purchase'}
           </Button>

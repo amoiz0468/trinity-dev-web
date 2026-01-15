@@ -32,8 +32,10 @@ import {
   Stack,
   Card,
   CardContent,
+  Alert,
+  InputBase,
 } from '@mui/material'
-import { QrCode2 as BarcodeIcon, Edit as EditIcon, ExpandMore as ExpandMoreIcon, Clear as ClearIcon, TuneOutlined as TuneIcon } from '@mui/icons-material'
+import { QrCode2 as BarcodeIcon, Edit as EditIcon, ExpandMore as ExpandMoreIcon, Clear as ClearIcon, TuneOutlined as TuneIcon, Add as AddIcon, Search as SearchIcon } from '@mui/icons-material'
 import { productService } from '../services'
 import { useState, useMemo } from 'react'
 
@@ -199,27 +201,70 @@ const Products = () => {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        Products
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Manage your product inventory
-      </Typography>
+      {/* Page Header */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a1a1a', mb: 1 }}>
+          Products
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Manage your product inventory and catalog
+        </Typography>
+      </Box>
 
+      {/* Top Actions & Search Bar */}
+      <Box sx={{ mb: 3, display: 'flex', gap: 2, justifyContent: 'space-between', flexWrap: 'wrap', alignItems: 'center' }}>
+        <Box
+          sx={{
+            flex: { xs: '1 1 100%', sm: '1 1 auto' },
+            display: 'flex',
+            alignItems: 'center',
+            bgcolor: '#f5f5f5',
+            borderRadius: '24px',
+            px: 2,
+            py: 1,
+            gap: 1,
+            maxWidth: { xs: '100%', sm: 400 },
+          }}
+        >
+          <SearchIcon sx={{ color: '#999', fontSize: 20 }} />
+          <InputBase
+            placeholder="Search products..."
+            sx={{
+              color: '#1a1a1a',
+              '& input': {
+                padding: '8px 0',
+                fontSize: '0.9rem',
+              },
+              '& input::placeholder': {
+                color: '#999',
+                opacity: 1,
+              },
+              flex: 1,
+            }}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </Box>
+        <Button 
+          variant="contained" 
+          startIcon={<AddIcon />}
+          onClick={() => setOpen(true)}
+          sx={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            fontWeight: 600,
+            px: 3,
+            py: 1.2,
+          }}
+        >
+          Add Product
+        </Button>
+      </Box>
+
+      {/* Filters Section */}
       <Box sx={{ mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6} md={5}>
-            <TextField
-              fullWidth
-              label="Search by name or brand"
-              variant="outlined"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Type to search..."
-            />
-          </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth>
+            <FormControl fullWidth size="small">
               <InputLabel>Sort By</InputLabel>
               <Select
                 value={sortBy}
@@ -233,125 +278,102 @@ const Products = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={12} md={4} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
-            <Button variant="contained" onClick={() => setOpen(true)}>
-              Add Product
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Stock Status</InputLabel>
+              <Select
+                value={filterStock}
+                label="Stock Status"
+                onChange={(e) => setFilterStock(e.target.value as any)}
+              >
+                <MenuItem value="all">All Products</MenuItem>
+                <MenuItem value="in-stock">In Stock</MenuItem>
+                <MenuItem value="low-stock">Low Stock</MenuItem>
+                <MenuItem value="out-of-stock">Out of Stock</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6} md={4}>
+            <Typography variant="caption" sx={{ display: 'block', fontWeight: 600, mb: 0.5 }}>
+              Price: ${priceRange[0]} - ${priceRange[1]}
+            </Typography>
+            <Slider
+              value={priceRange}
+              onChange={(e, newValue) => setPriceRange(newValue as [number, number])}
+              valueLabelDisplay="auto"
+              min={Math.floor(minPrice)}
+              max={Math.ceil(maxPrice) || 1000}
+              step={1}
+              size="small"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={2} sx={{ textAlign: 'right' }}>
+            <Button
+              size="small"
+              startIcon={<ClearIcon />}
+              onClick={() => {
+                setSearchTerm('')
+                setFilterStock('all')
+                setPriceRange([Math.floor(minPrice), Math.ceil(maxPrice) || 1000])
+                setSortBy('newest')
+              }}
+            >
+              Clear
             </Button>
           </Grid>
         </Grid>
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
+          Showing {products.length} of {allProducts.length} products
+        </Typography>
       </Box>
 
-      {/* Advanced Filters */}
-      <Accordion
-        expanded={expandedFilters}
-        onChange={() => setExpandedFilters(!expandedFilters)}
-        sx={{ mb: 3, bgcolor: '#f5f5f5' }}
-      >
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <TuneIcon sx={{ mr: 1 }} />
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            Advanced Filters
-          </Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Box sx={{ width: '100%' }}>
-            <Grid container spacing={3}>
-              {/* Stock Filter */}
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Stock Status</InputLabel>
-                  <Select
-                    value={filterStock}
-                    label="Stock Status"
-                    onChange={(e) => setFilterStock(e.target.value as any)}
-                  >
-                    <MenuItem value="all">All Products</MenuItem>
-                    <MenuItem value="in-stock">In Stock</MenuItem>
-                    <MenuItem value="low-stock">Low Stock</MenuItem>
-                    <MenuItem value="out-of-stock">Out of Stock</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              {/* Price Range Filter */}
-              <Grid item xs={12} sm={6}>
-                <Typography gutterBottom variant="subtitle2" sx={{ fontWeight: 600 }}>
-                  Price Range: ${priceRange[0]} - ${priceRange[1]}
-                </Typography>
-                <Slider
-                  value={priceRange}
-                  onChange={(e, newValue) => setPriceRange(newValue as [number, number])}
-                  valueLabelDisplay="auto"
-                  min={Math.floor(minPrice)}
-                  max={Math.ceil(maxPrice) || 1000}
-                  step={1}
-                  marks={[
-                    { value: Math.floor(minPrice), label: `$${Math.floor(minPrice)}` },
-                    { value: Math.ceil(maxPrice) || 1000, label: `$${Math.ceil(maxPrice) || 1000}` },
-                  ]}
-                />
-              </Grid>
-
-              {/* Results Summary */}
-              <Grid item xs={12}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Showing {products.length} of {allProducts.length} products
-                  </Typography>
-                  <Button
-                    size="small"
-                    startIcon={<ClearIcon />}
-                    onClick={() => {
-                      setSearchTerm('')
-                      setFilterStock('all')
-                      setPriceRange([Math.floor(minPrice), Math.ceil(maxPrice) || 1000])
-                      setSortBy('newest')
-                    }}
-                  >
-                    Clear Filters
-                  </Button>
-                </Box>
-              </Grid>
-            </Grid>
-          </Box>
-        </AccordionDetails>
-      </Accordion>
-
       {!products || products.length === 0 ? (
-        <Paper sx={{ p: 2 }}>
-          <Typography color="text.secondary">
+        <Paper sx={{ p: 4, textAlign: 'center', bgcolor: '#f8f9fa' }}>
+          <Typography color="text.secondary" sx={{ mb: 1 }}>
             {searchTerm || filterStock !== 'all' 
-              ? 'No products match your filters. Try adjusting the search or filter.'
-              : 'No products found. Use "Add Product" to create one.'}
+              ? '🔍 No products match your filters'
+              : '📦 No products yet'}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {searchTerm || filterStock !== 'all' 
+              ? 'Try adjusting your search or filter criteria'
+              : 'Click "Add Product" to get started'}
           </Typography>
         </Paper>
       ) : (
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} sx={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
           <Table>
             <TableHead>
-              <TableRow>
-                <TableCell>Image</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>Brand</TableCell>
-                <TableCell>Category</TableCell>
-                <TableCell>Price</TableCell>
-                <TableCell>Stock</TableCell>
-                <TableCell>Status</TableCell>
+              <TableRow sx={{ bgcolor: '#f8f9fa', borderBottom: '2px solid #eee' }}>
+                <TableCell sx={{ fontWeight: 700, color: '#1a1a1a' }}>Image</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#1a1a1a' }}>Name</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#1a1a1a' }}>Brand</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#1a1a1a' }}>Price</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#1a1a1a' }}>Stock</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#1a1a1a' }}>Status</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {products.map((product) => (
-                <TableRow key={product.id}>
+              {products.map((product, index) => (
+                <TableRow 
+                  key={product.id}
+                  sx={{
+                    '&:hover': {
+                      bgcolor: '#f8f9fa',
+                    },
+                    borderBottom: '1px solid #eee',
+                  }}
+                >
                   <TableCell>
                     <Box
                       component="img"
                       src={product.picture_url || ''}
                       alt={product.name}
                       sx={{
-                        width: 48,
-                        height: 48,
+                        width: 50,
+                        height: 50,
                         objectFit: 'cover',
-                        borderRadius: 1,
+                        borderRadius: '8px',
                         bgcolor: '#f5f5f5',
                         border: '1px solid #eee',
                       }}
@@ -361,10 +383,9 @@ const Products = () => {
                       }}
                     />
                   </TableCell>
-                  <TableCell>{product.name}</TableCell>
+                  <TableCell sx={{ fontWeight: 500 }}>{product.name}</TableCell>
                   <TableCell>{product.brand || '-'}</TableCell>
-                  <TableCell>{product.category_name || '-'}</TableCell>
-                  <TableCell>${product.price}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#667eea' }}>${product.price}</TableCell>
                   <TableCell>{product.quantity_in_stock}</TableCell>
                   <TableCell>
                     <Chip
@@ -377,6 +398,8 @@ const Products = () => {
                           : 'error'
                       }
                       size="small"
+                      variant="outlined"
+                      sx={{ fontWeight: 600 }}
                     />
                   </TableCell>
                 </TableRow>
@@ -387,8 +410,11 @@ const Products = () => {
       )}
 
       <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Add Product</DialogTitle>
-        <DialogContent sx={{ pt: 2 }}>
+        <DialogTitle sx={{ fontWeight: 700, fontSize: '1.3rem', pb: 1 }}>
+          Add New Product
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ pt: 3 }}>
           <Box sx={{ mb: 2 }}>
             <ToggleButtonGroup
               value={useBarcode ? 'barcode' : 'manual'}
@@ -413,6 +439,12 @@ const Products = () => {
             </ToggleButtonGroup>
           </Box>
 
+          {formError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {formError}
+            </Alert>
+          )}
+
           {useBarcode ? (
             <>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -425,14 +457,14 @@ const Products = () => {
                 value={form.barcode}
                 onChange={(e) => setForm({ ...form, barcode: e.target.value })}
                 placeholder="e.g., 3017620422003"
-                helperText="Enter barcode and click 'Fetch Data'"
+                size="small"
               />
               <Button
                 variant="outlined"
                 fullWidth
                 onClick={handleSyncBarcode}
                 disabled={syncing || !form.barcode}
-                sx={{ mt: 1, mb: 2 }}
+                sx={{ mt: 2, mb: 2 }}
               >
                 {syncing ? 'Fetching...' : 'Fetch Data from Open Food Facts'}
               </Button>
@@ -440,7 +472,7 @@ const Products = () => {
               {(form.name || form.brand) && (
                 <>
                   <Divider sx={{ my: 2 }}>Auto-filled Information</Divider>
-                  <Typography variant="body2" color="success.main" sx={{ mb: 1 }}>
+                  <Typography variant="body2" color="success.main" sx={{ mb: 1, fontWeight: 600 }}>
                     ✓ Product data fetched successfully!
                   </Typography>
                 </>
@@ -448,14 +480,16 @@ const Products = () => {
             </>
           ) : null}
 
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Basic Information</Typography>
           <TextField
-            label="Name"
+            label="Product Name"
             fullWidth
             margin="dense"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             required
             disabled={useBarcode && syncing}
+            size="small"
           />
           <TextField
             label="Brand"
@@ -464,14 +498,41 @@ const Products = () => {
             value={form.brand}
             onChange={(e) => setForm({ ...form, brand: e.target.value })}
             disabled={useBarcode && syncing}
+            size="small"
           />
+
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Pricing & Stock</Typography>
+          <TextField
+            label="Price"
+            type="number"
+            fullWidth
+            margin="dense"
+            value={form.price}
+            onChange={(e) => setForm({ ...form, price: e.target.value })}
+            required
+            size="small"
+            inputProps={{ step: "0.01", min: "0" }}
+          />
+          <TextField
+            label="Quantity in Stock"
+            type="number"
+            fullWidth
+            margin="dense"
+            value={form.quantity_in_stock}
+            onChange={(e) => setForm({ ...form, quantity_in_stock: e.target.value })}
+            required
+            size="small"
+            inputProps={{ min: "0" }}
+          />
+
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Media</Typography>
           <Button
             variant="outlined"
             component="label"
             fullWidth
-            sx={{ mt: 1, mb: 1 }}
+            sx={{ mt: 0.5, mb: 1 }}
           >
-            {form.picture ? `Selected: ${form.picture.name}` : 'Upload Image'}
+            {form.picture ? `✓ ${form.picture.name}` : '📷 Upload Image'}
             <input
               type="file"
               accept="image/*"
@@ -482,31 +543,9 @@ const Products = () => {
               }}
             />
           </Button>
-          <TextField
-            label="Price"
-            type="number"
-            fullWidth
-            margin="dense"
-            value={form.price}
-            onChange={(e) => setForm({ ...form, price: e.target.value })}
-            required
-          />
-          <TextField
-            label="Quantity in Stock"
-            type="number"
-            fullWidth
-            margin="dense"
-            value={form.quantity_in_stock}
-            onChange={(e) => setForm({ ...form, quantity_in_stock: e.target.value })}
-            required
-          />
-          {formError && (
-            <Typography color="error" variant="body2" sx={{ mt: 1 }}>
-              {formError}
-            </Typography>
-          )}
         </DialogContent>
-        <DialogActions>
+        <Divider />
+        <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setOpen(false)} disabled={createMutation.isLoading}>
             Cancel
           </Button>
@@ -514,8 +553,11 @@ const Products = () => {
             variant="contained"
             onClick={handleSubmit}
             disabled={createMutation.isLoading}
+            sx={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            }}
           >
-            {createMutation.isLoading ? 'Saving...' : 'Save'}
+            {createMutation.isLoading ? 'Saving...' : 'Add Product'}
           </Button>
         </DialogActions>
       </Dialog>
