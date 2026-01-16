@@ -1,0 +1,100 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - dev_user
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+        working-directory: backend
+
+      - name: Run backend tests
+        run: pytest
+        working-directory: backend
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
+
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+      BACKEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/trinity-backend
+      FRONTEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/trinity-frontend
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      APP_PATH: ${{ secrets.EC2_APP_PATH }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile.prod
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:latest
+            ${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: frontend/Dockerfile.prod
+          push: true
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:latest
+            ${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_TAG }}
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,APP_PATH,IMAGE_TAG
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd "$APP_PATH"
+            git fetch origin dev_user
+            git checkout dev_user
+            git pull origin dev_user
+            docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_TOKEN"
+            IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_NAMESPACE="$DOCKERHUB_USERNAME" docker compose -f docker-compose.prod.yml pull
+            IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_NAMESPACE="$DOCKERHUB_USERNAME" docker compose -f docker-compose.prod.yml up -d
