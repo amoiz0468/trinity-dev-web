@@ -84,17 +84,17 @@ jobs:
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
-        envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,APP_PATH,IMAGE_TAG
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,APP_PATH,IMAGE_TAG
           script: |
             set -e
             cd "$APP_PATH"
-            git fetch origin dev_user
-            git checkout dev_user
-            git pull origin dev_user
+            git fetch origin dev_depl
+            git checkout dev_depl
+            git pull origin dev_depl
             docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_TOKEN"
             IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_NAMESPACE="$DOCKERHUB_USERNAME" docker compose -f docker-compose.prod.yml pull
             IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_NAMESPACE="$DOCKERHUB_USERNAME" docker compose -f docker-compose.prod.yml up -d
