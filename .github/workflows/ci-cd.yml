@@ -3,7 +3,7 @@ name: CI/CD
 on:
   push:
     branches:
-      - dev
+      - dev_depl
   workflow_dispatch:
 
 jobs:
@@ -92,9 +92,9 @@ jobs:
           script: |
             set -e
             cd "$APP_PATH"
-            git fetch origin dev
-            git checkout dev
-            git pull origin dev
+            git fetch origin dev_depl
+            git checkout dev_depl
+            git pull origin dev_depl
             docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_TOKEN"
             IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_NAMESPACE="$DOCKERHUB_USERNAME" docker compose -f docker-compose.prod.yml pull
             IMAGE_TAG="$IMAGE_TAG" DOCKERHUB_NAMESPACE="$DOCKERHUB_USERNAME" docker compose -f docker-compose.prod.yml up -d
