@@ -1,5 +1,6 @@
 export interface Customer {
   id: number
+  user?: User
   first_name: string
   last_name: string
   email: string
@@ -15,6 +16,15 @@ export interface Customer {
   full_address: string
 }
 
+export interface User {
+  id: number
+  username: string
+  email: string
+  first_name: string
+  last_name: string
+  is_staff: boolean
+}
+
 export interface Product {
   id: number
   name: string
@@ -23,6 +33,7 @@ export interface Product {
   category: number
   category_name: string
   picture_url: string
+  picture?: string
   quantity_in_stock: number
   stock_status: string
   is_in_stock: boolean
@@ -107,4 +118,9 @@ export interface KPIData {
     total_revenue: number
     total_quantity: number
   }>
+}
+
+export interface CurrentUserResponse {
+  user: User
+  customer: Customer | null
 }

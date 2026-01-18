@@ -2,11 +2,12 @@
 
 ## Table of Contents
 1. [Architecture Overview](#architecture-overview)
-2. [Database Schema](#database-schema)
-3. [API Design](#api-design)
-4. [Security Implementation](#security-implementation)
-5. [Data Flow](#data-flow)
-6. [Technology Choices](#technology-choices)
+2. [UML Diagrams](#uml-diagrams)
+3. [Database Schema](#database-schema)
+4. [API Design](#api-design)
+5. [Security Implementation](#security-implementation)
+6. [Data Flow](#data-flow)
+7. [Technology Choices](#technology-choices)
 
 ## Architecture Overview
 
@@ -50,6 +51,86 @@ App (Router)
 │   └── Reports
 └── Login (Authentication)
 ```
+
+## UML Diagrams
+
+### Class Diagram
+
+The class diagram illustrates the complete data model of the Trinity system, showing all entities, their attributes, and relationships.
+
+![Class Diagram](docs/uml/class-diagram.puml)
+
+**Key Entities:**
+- **User**: Django's built-in authentication model
+- **Customer**: Extended user profile with billing information
+- **Category**: Product categorization
+- **Product**: Inventory items with nutritional data from Open Food Facts
+- **Invoice**: Customer purchase records
+- **InvoiceItem**: Individual line items within invoices
+
+**Key Relationships:**
+1. User ↔ Customer (1:0..1) - Optional user authentication
+2. Customer → Invoice (1:N) - Customer purchase history
+3. Category → Product (1:N) - Product categorization
+4. Product → InvoiceItem (1:N) - Product sales tracking
+5. Invoice → InvoiceItem (1:N) - Invoice line items
+
+### Activity Diagrams
+
+#### 1. Invoice Creation Workflow
+![Invoice Creation](docs/uml/activity-invoice-creation.puml)
+
+This diagram shows the complete process of creating an invoice, including:
+- User interaction on frontend
+- Backend validation and processing
+- Database transaction handling
+- Stock management updates
+- Error handling scenarios
+
+#### 2. Product Synchronization with Open Food Facts
+![Product Sync](docs/uml/activity-product-sync.puml)
+
+This diagram illustrates:
+- Barcode scanning and validation
+- API integration with Open Food Facts
+- Product data parsing and mapping
+- Create/Update logic for products
+- Sync frequency management
+
+#### 3. User Authentication Flow
+![Authentication](docs/uml/activity-authentication.puml)
+
+This diagram covers:
+- JWT token-based authentication
+- Login process and token generation
+- Token refresh mechanism
+- Role-based routing (Manager vs Customer)
+- Session management
+
+#### 4. KPI Report Generation
+![Reports](docs/uml/activity-reports.puml)
+
+This diagram demonstrates:
+- Report data aggregation
+- Multiple metric calculations (revenue, products, customers)
+- Data visualization preparation
+- Export functionality
+
+**Rendering UML Diagrams:**
+
+The UML diagrams are written in PlantUML format (.puml files) located in `docs/uml/`. To view them:
+
+1. **Online**: Use [PlantUML Online Server](http://www.plantuml.com/plantuml/uml/)
+2. **VS Code**: Install the "PlantUML" extension
+3. **Command Line**: 
+   ```bash
+   # Install PlantUML
+   brew install plantuml  # macOS
+   sudo apt-get install plantuml  # Ubuntu/Debian
+   
+   # Generate PNG images
+   plantuml docs/uml/*.puml
+   ```
 
 ## Database Schema
 
@@ -406,3 +487,66 @@ List endpoints return paginated results:
 6. **Kubernetes**: Orchestration for scale
 7. **GraphQL**: Alternative API option
 8. **WebSockets**: Real-time updates
+
+## Testing & Quality Assurance
+
+### Unit Testing
+
+The project uses **pytest** with **pytest-django** for comprehensive testing:
+
+**Test Coverage:**
+- `users` app - Customer management and authentication
+- `products` app - Product CRUD and Open Food Facts sync
+- `invoices` app - Invoice processing and calculations
+- `reports` app - KPI and analytics generation
+
+**Running Tests:**
+```bash
+cd backend
+pytest                    # Run all tests
+pytest -v                 # Verbose output
+pytest users/            # Test specific app
+pytest --cov             # With coverage report
+```
+
+**Test Reports Generated:**
+1. **HTML Test Report** (`test-report.html`) - Detailed test results
+2. **HTML Coverage Report** (`htmlcov/index.html`) - Line-by-line coverage
+3. **XML Coverage Report** (`coverage.xml`) - For CI/CD integration
+
+### CI/CD Pipeline
+
+**GitHub Actions Workflow** (`.github/workflows/ci-cd.yml`):
+
+1. **Test Stage**:
+   - Run pytest with coverage
+   - Generate test reports
+   - Upload artifacts (visible in Actions tab)
+   - Display coverage summary
+
+2. **Build & Deploy Stage**:
+   - Build Docker images
+   - Push to Docker Hub
+   - Deploy to EC2 instance
+   - Auto-restart services
+
+**Viewing Test Reports in CI/CD:**
+- Navigate to GitHub Actions → Latest workflow run
+- Scroll to "Artifacts" section
+- Download "test-results" artifact
+- Extract and open `test-report.html` or `htmlcov/index.html`
+
+**Pipeline Visibility:**
+- ✅ Test pass/fail status shown in each commit
+- 📊 Coverage percentage displayed in job summary
+- 📄 Downloadable reports for detailed analysis
+- 🔄 Automatic deployment on successful tests
+
+For detailed testing documentation, see [docs/TESTING.md](docs/TESTING.md).
+
+---
+
+**Documentation Version:** 2.0  
+**Last Updated:** January 2026  
+**Maintained By:** Trinity Development Team
+
