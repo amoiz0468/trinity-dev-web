@@ -1,19 +1,25 @@
 # UML Diagrams
 
-This directory contains UML diagrams for the Trinity Development Web application.
+This directory contains UML diagrams for the Trinity Development Web application in PNG format.
 
 ## Diagrams
 
-### 1. Class Diagram (`class-diagram.puml`)
+### 1. Class Diagram
+**File:** `class-diagram.png`
+
 Shows the complete data model including:
 - Django models (User, Customer, Category, Product, Invoice, InvoiceItem)
 - Attributes and data types
 - Relationships and cardinalities
 - Key methods and properties
 
+![Class Diagram](class-diagram.png)
+
 ### 2. Activity Diagrams
 
-#### Invoice Creation (`activity-invoice-creation.puml`)
+#### Invoice Creation
+**File:** `activity-invoice-creation.png`
+
 Workflow for creating customer invoices:
 - Product selection and validation
 - Stock checking
@@ -21,7 +27,11 @@ Workflow for creating customer invoices:
 - Payment processing
 - Database transactions
 
-#### Product Synchronization (`activity-product-sync.puml`)
+![Invoice Creation Workflow](activity-invoice-creation.png)
+
+#### Product Synchronization
+**File:** `activity-product-sync.png`
+
 Integration with Open Food Facts API:
 - Barcode scanning
 - API querying
@@ -29,7 +39,11 @@ Integration with Open Food Facts API:
 - Product creation/update
 - Sync management
 
-#### User Authentication (`activity-authentication.puml`)
+![Product Sync Workflow](activity-product-sync.png)
+
+#### User Authentication
+**File:** `activity-authentication.png`
+
 Authentication and authorization flow:
 - Login process
 - JWT token generation
@@ -37,85 +51,42 @@ Authentication and authorization flow:
 - Role-based access control
 - Session management
 
-#### Report Generation (`activity-reports.puml`)
+![Authentication Workflow](activity-authentication.png)
+
+#### Report Generation
+**File:** `activity-reports.png`
+
 KPI and analytics workflow:
 - Data aggregation
 - Metric calculation
 - Visualization preparation
 - Export functionality
 
+![Report Generation Workflow](activity-reports.png)
+
 ## Viewing the Diagrams
 
-### Option 1: Online Viewer
-1. Go to [PlantUML Online Server](http://www.plantuml.com/plantuml/uml/)
-2. Copy the content of any .puml file
-3. Paste it into the editor
-4. The diagram will render automatically
+All diagrams are provided as **PNG image files** and can be viewed:
 
-### Option 2: VS Code Extension
-1. Install the "PlantUML" extension by jebbs
-2. Open any .puml file
-3. Press `Alt+D` (or `Option+D` on macOS) to preview
-4. Or right-click and select "Preview Current Diagram"
+### Option 1: GitHub Web (Easiest)
+Open any `.png` file in this folder - GitHub displays them automatically
 
-### Option 3: Command Line
+### Option 2: Image Viewer
 ```bash
-# Install PlantUML (requires Java)
 # macOS
-brew install plantuml
+open *.png
 
-# Ubuntu/Debian
-sudo apt-get install plantuml
+# Linux
+xdg-open activity-authentication.png
 
-# Windows (using Chocolatey)
-choco install plantuml
-
-# Generate PNG images
-plantuml *.puml
-
-# Generate SVG (scalable)
-plantuml -tsvg *.puml
-
-# Generate PDF
-plantuml -tpdf *.puml
+# Windows
+start class-diagram.png
 ```
 
-### Option 4: Docker
-```bash
-# Generate all diagrams as PNG
-docker run -v $(pwd):/data plantuml/plantuml *.puml
+### Option 3: VS Code
+Simply double-click any `.png` file to view in VS Code's image viewer
 
-# Generate as SVG
-docker run -v $(pwd):/data plantuml/plantuml -tsvg *.puml
-```
-
-## File Format
-
-All diagrams use PlantUML syntax (.puml files). PlantUML is a text-based diagramming tool that allows:
-- Version control friendly (plain text)
-- Easy collaboration
-- Automatic layout
-- Multiple export formats (PNG, SVG, PDF)
-
-## Integration with Documentation
-
-These diagrams are referenced in the main `TECHNICAL_DOCUMENTATION.md` file and provide visual representation of:
-- System architecture
-- Data structures
-- Business processes
-- User workflows
-
-## Updating Diagrams
-
-When the application structure changes:
-1. Edit the corresponding .puml file
-2. Regenerate images if needed
-3. Update references in documentation
-4. Commit both source (.puml) and generated images
-
-## Resources
-
-- [PlantUML Official Documentation](https://plantuml.com/)
-- [PlantUML Class Diagram Guide](https://plantuml.com/class-diagram)
-- [PlantUML Activity Diagram Guide](https://plantuml.com/activity-diagram-beta)
-- [Real World PlantUML Examples](https://real-world-plantuml.com/)
+### Option 4: Print/Embed
+- Right-click and print directly
+- Drag into presentations
+- Attach to documents
