@@ -27,6 +27,30 @@ jobs:
         run: pytest
         working-directory: backend
 
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            backend/test-report.html
+            backend/htmlcov/
+            backend/coverage.xml
+          retention-days: 30
+
+      - name: Display coverage summary
+        if: always()
+        run: |
+          echo "## Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f coverage.xml ]; then
+            coverage_percent=$(grep -oP 'line-rate="\K[0-9.]+' coverage.xml | head -1 | awk '{printf "%.1f", $1*100}')
+            echo "📊 **Coverage: ${coverage_percent}%**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "View detailed reports in the artifacts section above." >> $GITHUB_STEP_SUMMARY
+        working-directory: backend
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:

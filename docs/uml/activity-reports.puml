@@ -1,0 +1,203 @@
+@startuml Report Generation - Activity Diagram
+
+skinparam activityBackgroundColor LightCoral
+skinparam activityBorderColor DarkRed
+skinparam activityStartColor Green
+skinparam activityEndColor Red
+
+title KPI Reports Generation Workflow
+
+|Manager/Frontend|
+start
+
+:Navigate to Reports page;
+
+:Select date range;
+note right
+  Options:
+  - Last 7 days
+  - Last 30 days
+  - Last 90 days
+  - Custom range
+end note
+
+:Click "Generate Report";
+
+:Send request to backend;
+:GET /api/reports/?days=30;
+
+|Backend|
+:Receive report request;
+
+:Parse query parameters;
+note right
+  - days (default: 30)
+  - start_date (optional)
+  - end_date (optional)
+end note
+
+:Calculate date range;
+
+:Query database for invoices;
+note right
+  Filter:
+  - created_at >= start_date
+  - created_at <= end_date
+  - status != 'cancelled'
+end note
+
+partition "Calculate Revenue Metrics" {
+  :Calculate total revenue;
+  note right
+    SUM(total_amount)
+    WHERE status = 'paid'
+  end note
+  
+  :Calculate average order value;
+  note right
+    AVG(total_amount)
+  end note
+  
+  :Count total orders;
+  note right
+    COUNT(*)
+  end note
+  
+  :Group revenue by date;
+  note right
+    Daily/Weekly trends
+    for charts
+  end note
+}
+
+partition "Calculate Product Metrics" {
+  :Query invoice items;
+  
+  :Get top selling products;
+  note right
+    GROUP BY product_id
+    ORDER BY SUM(quantity) DESC
+    LIMIT 10
+  end note
+  
+  :Calculate revenue per product;
+  note right
+    GROUP BY product_id
+    SUM(total_price)
+  end note
+  
+  :Get low stock products;
+  note right
+    WHERE quantity_in_stock < 10
+  end note
+}
+
+partition "Calculate Customer Metrics" {
+  :Get top customers;
+  note right
+    GROUP BY customer_id
+    ORDER BY SUM(total_amount) DESC
+    LIMIT 10
+  end note
+  
+  :Count new customers;
+  note right
+    WHERE created_at in date_range
+  end note
+  
+  :Calculate customer retention;
+  note right
+    Customers with multiple orders
+  end note
+}
+
+partition "Calculate Category Metrics" {
+  :Get revenue by category;
+  note right
+    JOIN products, categories
+    GROUP BY category_id
+    SUM(invoice_items.total_price)
+  end note
+}
+
+partition "Calculate Payment Metrics" {
+  :Get payment method distribution;
+  note right
+    GROUP BY payment_method
+    COUNT(*), SUM(total_amount)
+  end note
+}
+
+:Format data for response;
+note right
+  Structure JSON with:
+  - revenue_metrics
+  - product_metrics
+  - customer_metrics
+  - category_metrics
+  - payment_metrics
+  - time_series_data
+end note
+
+:Return JSON response;
+
+|Manager/Frontend|
+:Receive report data;
+
+:Parse and process data;
+
+partition "Render Visualizations" {
+  :Create revenue chart;
+  note right
+    Line chart showing
+    revenue over time
+  end note
+  
+  :Create product charts;
+  note right
+    Bar charts:
+    - Top products
+    - Category breakdown
+  end note
+  
+  :Create customer charts;
+  note right
+    - Top customers
+    - New vs returning
+  end note
+  
+  :Create payment pie chart;
+  note right
+    Distribution of
+    payment methods
+  end note
+}
+
+:Display KPI cards;
+note right
+  Summary metrics:
+  - Total Revenue
+  - Total Orders
+  - Average Order Value
+  - Growth Rate
+end note
+
+:Display data tables;
+note right
+  Detailed breakdowns:
+  - Top products list
+  - Top customers list
+  - Recent orders
+end note
+
+:Enable report export;
+note right
+  Options:
+  - Print PDF
+  - Export CSV
+  - Share link
+end note
+
+stop
+
+@enduml

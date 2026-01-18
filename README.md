@@ -12,6 +12,25 @@ Trinity is a full-stack web application designed for grocery chain back office o
 - **Visualize KPIs**: Monitor key performance indicators through interactive dashboards
 - **Integrate with Open Food Facts**: Automatically fetch product information
 
+## 📦 Project Deliverables
+
+This project includes all required deliverables:
+
+1. ✅ **Source Code** - Complete backend and frontend implementation
+2. ✅ **Technical Documentation** - See [TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md)
+   - Architecture and components
+   - Technology choices with justifications
+   - Data flow descriptions
+3. ✅ **UML Diagrams** - See [docs/uml/](docs/uml/)
+   - Class diagram showing data structures and relationships
+   - Activity diagrams for key workflows
+4. ✅ **Unit Tests Report** - Visible in CI/CD pipeline
+   - Automated test execution
+   - Coverage reports
+   - Downloadable artifacts
+
+📄 **Full deliverables checklist**: [DELIVERABLES.md](DELIVERABLES.md)
+
 ## 🏗️ Architecture
 
 ### Technology Stack
@@ -164,14 +183,62 @@ Interactive API Documentation: `http://localhost:8000/api/docs/`
 
 ## 🧪 Testing
 
+### Running Tests Locally
+
 ```bash
 cd backend
-pytest --cov=.
+pytest
 ```
 
-Minimum 20% code coverage target.
+This generates:
+- `test-report.html` - Detailed test execution report
+- `htmlcov/index.html` - Interactive coverage report
+- `coverage.xml` - Machine-readable coverage data
 
-## 📄 License
+### CI/CD Test Reports
+
+Tests run automatically on every push to `dev_depl` branch:
+
+1. Navigate to **GitHub Actions** tab
+2. Select the latest workflow run
+3. Scroll to **"Artifacts"** section
+4. Download **"test-results"** artifact
+5. Extract and open HTML reports in browser
+
+**Coverage Target:** 70%+ code coverage
+
+📚 **Detailed testing guide**: [docs/TESTING.md](docs/TESTING.md)
+
+## 📐 UML Diagrams
+
+The project includes comprehensive UML diagrams:
+
+- **Class Diagram** - Complete data model with relationships
+- **Activity Diagrams**:
+  - Invoice Creation Workflow
+  - Product Synchronization with Open Food Facts
+  - User Authentication Flow
+  - Report Generation Process
+
+📐 **View diagrams**: [docs/uml/](docs/uml/) | [How to render](docs/uml/README.md)
+
+## � Documentation
+
+- **[TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md)** - Complete technical documentation
+  - System architecture
+  - Components and modules
+  - Technology choices and justifications
+  - Data flows and business processes
+  - Security implementation
+  - Performance considerations
+
+- **[DELIVERABLES.md](DELIVERABLES.md)** - Project deliverables checklist
+
+- **[docs/TESTING.md](docs/TESTING.md)** - Testing guide and coverage reports
+
+- **[docs/uml/](docs/uml/)** - UML diagrams (PlantUML format)
+
+## �📄 License
 
 Trinity Dev Web Project - Educational/Commercial Use
 

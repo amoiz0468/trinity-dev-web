@@ -1,0 +1,150 @@
+@startuml User Authentication Flow - Activity Diagram
+
+skinparam activityBackgroundColor LightGreen
+skinparam activityBorderColor DarkGreen
+skinparam activityStartColor Green
+skinparam activityEndColor Red
+
+title User Authentication and Authorization Workflow
+
+|User/Frontend|
+start
+
+:Navigate to application;
+
+if (Has valid access token?) then (yes)
+  :Include token in request header;
+  note right
+    Authorization: Bearer <access_token>
+  end note
+  
+  |Backend|
+  :Validate JWT token;
+  
+  if (Token valid & not expired?) then (yes)
+    :Grant access to resource;
+    |User/Frontend|
+    :Display protected content;
+    stop
+  else (no)
+    if (Token expired?) then (yes)
+      |User/Frontend|
+      :Attempt token refresh;
+      :POST /api/auth/token/refresh/;
+      note right
+        Send refresh token
+      end note
+      
+      |Backend|
+      :Validate refresh token;
+      
+      if (Refresh token valid?) then (yes)
+        :Generate new access token;
+        :Return new tokens;
+        |User/Frontend|
+        :Store new tokens;
+        :Retry original request;
+        |Backend|
+        :Grant access to resource;
+        |User/Frontend|
+        :Display protected content;
+        stop
+      else (no)
+        :Return 401 Unauthorized;
+        |User/Frontend|
+        :Redirect to login page;
+      endif
+    else (invalid)
+      :Return 401 Unauthorized;
+      |User/Frontend|
+      :Redirect to login page;
+    endif
+  endif
+else (no)
+  :Display login page;
+endif
+
+:User enters credentials;
+note right
+  - Username
+  - Password
+end note
+
+:Submit login form;
+:POST /api/auth/token/;
+
+|Backend|
+:Receive credentials;
+
+:Validate credentials;
+if (Valid credentials?) then (no)
+  :Return 401 Unauthorized;
+  note right
+    Invalid username or password
+  end note
+  |User/Frontend|
+  :Display error message;
+  :Clear password field;
+  stop
+else (yes)
+endif
+
+:Check user is active;
+if (is_active = true?) then (no)
+  :Return 403 Forbidden;
+  note right
+    Account deactivated
+  end note
+  |User/Frontend|
+  :Display "Account disabled";
+  stop
+else (yes)
+endif
+
+:Generate JWT tokens;
+note right
+  - Access token (60 min)
+  - Refresh token (24 hours)
+  Include user info:
+  - user_id
+  - username
+  - email
+  - role (staff/customer)
+end note
+
+:Return tokens + user info;
+
+|User/Frontend|
+:Store tokens in localStorage;
+note right
+  - access_token
+  - refresh_token
+  - user data
+end note
+
+:Decode token to get user role;
+
+if (User role?) then (is_staff)
+  :Redirect to /dashboard;
+  note right
+    Manager view with full access:
+    - Products management
+    - Customer management
+    - Invoice creation
+    - Reports & analytics
+  end note
+else (customer)
+  :Redirect to /catalog;
+  note right
+    Customer view:
+    - Browse products
+    - View orders
+    - Update profile
+  end note
+endif
+
+:Display appropriate interface;
+
+stop
+
+@enduml
