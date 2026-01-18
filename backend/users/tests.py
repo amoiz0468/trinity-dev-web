@@ -28,7 +28,7 @@ class TestCustomerAPI:
         assert response.status_code == 200
         assert len(response.data['results']) >= 1
     
-    def test_create_customer(self, authenticated_client):
+    def test_create_customer(self, staff_client):
         data = {
             'first_name': 'Jane',
             'last_name': 'Smith',
@@ -39,7 +39,7 @@ class TestCustomerAPI:
             'city': 'Los Angeles',
             'country': 'USA'
         }
-        response = authenticated_client.post('/api/users/', data)
+        response = staff_client.post('/api/users/', data)
         assert response.status_code == 201
         assert response.data['first_name'] == 'Jane'
     
@@ -48,14 +48,14 @@ class TestCustomerAPI:
         assert response.status_code == 200
         assert response.data['email'] == customer.email
     
-    def test_update_customer(self, authenticated_client, customer):
+    def test_update_customer(self, staff_client, customer):
         data = {'phone_number': '+1111111111'}
-        response = authenticated_client.patch(f'/api/users/{customer.id}/', data)
+        response = staff_client.patch(f'/api/users/{customer.id}/', data)
         assert response.status_code == 200
         assert response.data['phone_number'] == '+1111111111'
     
-    def test_delete_customer(self, authenticated_client, customer):
-        response = authenticated_client.delete(f'/api/users/{customer.id}/')
+    def test_delete_customer(self, staff_client, customer):
+        response = staff_client.delete(f'/api/users/{customer.id}/')
         assert response.status_code == 204
         assert not Customer.objects.filter(id=customer.id).exists()
     

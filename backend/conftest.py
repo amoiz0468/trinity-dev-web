@@ -19,16 +19,31 @@ def user(db):
         email='test@example.com'
     )
 
+@pytest.fixture
+def staff_user(db):
+    return User.objects.create_user(
+        username='staffuser',
+        password='testpass123',
+        email='staff@example.com',
+        is_staff=True,
+    )
+
 
 @pytest.fixture
 def authenticated_client(api_client, user):
     api_client.force_authenticate(user=user)
     return api_client
 
+@pytest.fixture
+def staff_client(api_client, staff_user):
+    api_client.force_authenticate(user=staff_user)
+    return api_client
+
 
 @pytest.fixture
-def customer(db):
+def customer(db, user):
     return Customer.objects.create(
+        user=user,
         first_name='John',
         last_name='Doe',
         email='john@example.com',

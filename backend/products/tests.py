@@ -31,7 +31,7 @@ class TestProductAPI:
         response = authenticated_client.get('/api/products/')
         assert response.status_code == 200
     
-    def test_create_product(self, authenticated_client, category):
+    def test_create_product(self, staff_client, category):
         data = {
             'name': 'Pepsi',
             'brand': 'PepsiCo',
@@ -39,6 +39,6 @@ class TestProductAPI:
             'category': category.id,
             'quantity_in_stock': 50
         }
-        response = authenticated_client.post('/api/products/', data)
+        response = staff_client.post('/api/products/', data)
         assert response.status_code == 201
         assert response.data['name'] == 'Pepsi'
