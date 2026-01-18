@@ -16,16 +16,19 @@ import {
   Avatar,
   Menu,
   MenuItem,
+  Button,
+  InputBase,
 } from '@mui/material'
 import {
   Menu as MenuIcon,
   Close as CloseIcon,
-  Dashboard as DashboardIcon,
-  Inventory as InventoryIcon,
-  People as PeopleIcon,
-  Receipt as ReceiptIcon,
-  Assessment as AssessmentIcon,
+  Storefront as StorefrontIcon,
+  ReceiptLong as ReceiptLongIcon,
+  AccountCircle as AccountCircleIcon,
   Logout as LogoutIcon,
+  ShoppingCart as ShoppingCartIcon,
+  FavoriteBorder as HeartIcon,
+  Search as SearchIcon,
   Settings as SettingsIcon,
   Notifications as NotificationsIcon,
 } from '@mui/icons-material'
@@ -34,14 +37,12 @@ import { authService } from '../services'
 const drawerWidth = 260
 
 const menuItems = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-  { text: 'Products', icon: <InventoryIcon />, path: '/products' },
-  { text: 'Customers', icon: <PeopleIcon />, path: '/customers' },
-  { text: 'Invoices', icon: <ReceiptIcon />, path: '/invoices' },
-  { text: 'Reports', icon: <AssessmentIcon />, path: '/reports' },
+  { text: 'Shop Catalog', icon: <StorefrontIcon />, path: '/customer/catalog' },
+  { text: 'My Orders', icon: <ReceiptLongIcon />, path: '/customer/orders' },
+  { text: 'My Profile', icon: <AccountCircleIcon />, path: '/customer/profile' },
 ]
 
-const Layout = () => {
+const CustomerLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const navigate = useNavigate()
@@ -176,7 +177,7 @@ const Layout = () => {
           zIndex: 1200,
         }}
       >
-        <Toolbar sx={{ justifyContent: 'space-between' }}>
+        <Toolbar sx={{ justifyContent: 'space-between', minHeight: 65 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <IconButton
               color="inherit"
@@ -190,21 +191,26 @@ const Layout = () => {
               variant="h6" 
               noWrap 
               component="div" 
-              sx={{ fontWeight: 700, fontSize: '1.1rem', color: '#1a1a1a' }}
+              sx={{ fontWeight: 700, fontSize: '1.1rem', color: '#1a1a1a', display: { xs: 'none', sm: 'block' } }}
             >
-              Back Office
+              Shop
             </Typography>
           </Box>
 
           {/* Right Actions */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <IconButton color="inherit">
-              <Badge badgeContent={3} color="error">
-                <NotificationsIcon />
+            <IconButton color="inherit" sx={{ display: { xs: 'none', sm: 'block' } }}>
+              <Badge badgeContent={0} color="error">
+                <HeartIcon />
               </Badge>
             </IconButton>
-            <IconButton color="inherit">
-              <SettingsIcon />
+            <IconButton color="inherit" sx={{ display: { xs: 'none', sm: 'block' } }}>
+              <Badge badgeContent={2} color="error">
+                <ShoppingCartIcon />
+              </Badge>
+            </IconButton>
+            <IconButton color="inherit" sx={{ display: { xs: 'none', sm: 'block' } }}>
+              <NotificationsIcon />
             </IconButton>
             <IconButton 
               onClick={handleMenuOpen}
@@ -215,10 +221,12 @@ const Layout = () => {
                   width: 32, 
                   height: 32, 
                   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
                 }}
               >
-                A
+                C
               </Avatar>
             </IconButton>
           </Box>
@@ -228,7 +236,7 @@ const Layout = () => {
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
           >
-            <MenuItem>Profile</MenuItem>
+            <MenuItem>My Account</MenuItem>
             <MenuItem>Settings</MenuItem>
             <MenuItem onClick={handleLogout}>Logout</MenuItem>
           </Menu>
@@ -288,4 +296,4 @@ const Layout = () => {
   )
 }
 
-export default Layout
+export default CustomerLayout

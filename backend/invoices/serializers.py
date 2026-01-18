@@ -1,9 +1,13 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from drf_spectacular.utils import extend_schema_field
 from decimal import Decimal
+from django.db import transaction
+from django.utils import timezone
 from .models import Invoice, InvoiceItem
 from users.serializers import CustomerSerializer
 from products.serializers import ProductListSerializer
+from products.models import Product
 
 
 class InvoiceItemSerializer(serializers.ModelSerializer):
@@ -62,7 +66,7 @@ class InvoiceCreateSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         items_data = validated_data.pop('items')
-        
+
         # Calculate subtotal from items
         subtotal = sum(
             item_data['unit_price'] * item_data['quantity']
@@ -78,14 +82,31 @@ class InvoiceCreateSerializer(serializers.ModelSerializer):
         validated_data['subtotal'] = subtotal
         validated_data['tax_amount'] = tax_amount
         validated_data['total_amount'] = total_amount
-        
-        # Create invoice
-        invoice = Invoice.objects.create(**validated_data)
-        
-        # Create invoice items
-        for item_data in items_data:
-            InvoiceItem.objects.create(invoice=invoice, **item_data)
-        
+        validated_data['status'] = 'paid'
+        validated_data['paid_at'] = timezone.now()
+
+        with transaction.atomic():
+            locked_products = {}
+            for item_data in items_data:
+                product = Product.objects.select_for_update().get(pk=item_data['product'].pk)
+                if product.quantity_in_stock < item_data['quantity']:
+                    raise ValidationError(
+                        {'items': f'Insufficient stock for {product.name}.'}
+                    )
+                locked_products[product.pk] = product
+
+            # Create invoice
+            invoice = Invoice.objects.create(**validated_data)
+
+            # Create invoice items and decrement stock
+            for item_data in items_data:
+                product = locked_products[item_data['product'].pk]
+                item_payload = item_data.copy()
+                item_payload['product'] = product
+                InvoiceItem.objects.create(invoice=invoice, **item_payload)
+                product.quantity_in_stock = product.quantity_in_stock - item_data['quantity']
+                product.save(update_fields=['quantity_in_stock'])
+
         return invoice
 
 

@@ -22,7 +22,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
-from users.views import CustomerViewSet
+from users.views import CustomerViewSet, RegisterView, CurrentUserView
 from products.views import CategoryViewSet, ProductViewSet
 from invoices.views import InvoiceViewSet, InvoiceItemViewSet
 from reports.views import (
@@ -54,6 +54,8 @@ urlpatterns = [
     # JWT Authentication
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/auth/register/', RegisterView.as_view(), name='auth_register'),
+    path('api/auth/me/', CurrentUserView.as_view(), name='auth_me'),
     
     # Reports
     path('api/reports/', ReportsView.as_view(), name='reports'),
